@@ -22,7 +22,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "plugins": [{ "name": "typescript-plugin-css-modules" }]
   },
   "include": ["src"]
 }
