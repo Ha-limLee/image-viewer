@@ -80,6 +80,7 @@ export default function Viewer(): React.JSX.Element {
       </button>
       <div
         className={classes["stage-container"]}
+        style={{ width: STAGE_WIDTH, height: STAGE_HEIGHT }}
         onScroll={(e) => {
           const dx = e.currentTarget.scrollLeft;
           const dy = e.currentTarget.scrollTop;

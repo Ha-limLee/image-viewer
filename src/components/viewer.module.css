@@ -9,8 +9,6 @@
 }
 
 .stage-container {
-  width: 800px;
-  height: 600px;
   background-color: gray;
   outline: 1px solid black;
   overflow: auto;
