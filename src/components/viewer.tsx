@@ -40,8 +40,8 @@ export default function Viewer(): React.JSX.Element {
   const stageRef = useRef<Konva.Stage>(null);
 
   const [image] = useImage(imageUrl);
+
   const [scale, setScale] = useState(1);
-  // TODO: impl reset
   const [initialScale, setInitialScale] = useState(1);
   const _scale =
     image &&
