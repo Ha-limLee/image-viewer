@@ -79,40 +79,49 @@ export default function Viewer(): React.JSX.Element {
         Reset
       </button>
       <div className={classes["stage-container"]}>
-        <Stage
-          ref={stageRef}
-          width={STAGE_WIDTH}
-          height={STAGE_HEIGHT}
-          scale={{ x: scale, y: scale }}
-          x={stagePos.x}
-          y={stagePos.y}
-          onWheel={(e) => {
-            e.evt.preventDefault();
-            if (!e.evt.ctrlKey || !stageRef.current) return;
-
-            const pointer = stageRef.current.getPointerPosition();
-            if (!pointer) return;
-
-            const mousePointTo = {
-              x: (pointer.x - stageRef.current.x()) / scale,
-              y: (pointer.y - stageRef.current.y()) / scale,
-            };
-            const direction = e.evt.deltaY > 0 ? -1 : 1;
-            const newScale =
-              direction > 0 ? scale * SCALE_BY : scale / SCALE_BY;
-            setScale(newScale);
-
-            const newPos = {
-              x: pointer.x - mousePointTo.x * newScale,
-              y: pointer.y - mousePointTo.y * newScale,
-            };
-            setStagePos(newPos);
+        <div
+          className={classes["scroll-maker"]}
+          style={{
+            // TODO: resize according to scale
+            width: STAGE_WIDTH + 100,
+            height: STAGE_HEIGHT + 100,
           }}
         >
-          <Layer>
-            <Image image={image} />
-          </Layer>
-        </Stage>
+          <Stage
+            ref={stageRef}
+            width={STAGE_WIDTH}
+            height={STAGE_HEIGHT}
+            scale={{ x: scale, y: scale }}
+            x={stagePos.x}
+            y={stagePos.y}
+            onWheel={(e) => {
+              e.evt.preventDefault();
+              if (!e.evt.ctrlKey || !stageRef.current) return;
+
+              const pointer = stageRef.current.getPointerPosition();
+              if (!pointer) return;
+
+              const mousePointTo = {
+                x: (pointer.x - stageRef.current.x()) / scale,
+                y: (pointer.y - stageRef.current.y()) / scale,
+              };
+              const direction = e.evt.deltaY > 0 ? -1 : 1;
+              const newScale =
+                direction > 0 ? scale * SCALE_BY : scale / SCALE_BY;
+              setScale(newScale);
+
+              const newPos = {
+                x: pointer.x - mousePointTo.x * newScale,
+                y: pointer.y - mousePointTo.y * newScale,
+              };
+              setStagePos(newPos);
+            }}
+          >
+            <Layer>
+              <Image image={image} />
+            </Layer>
+          </Stage>
+        </div>
       </div>
     </div>
   );
