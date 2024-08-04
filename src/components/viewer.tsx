@@ -34,6 +34,11 @@ function centerImage({
 const STAGE_WIDTH = 800;
 const STAGE_HEIGHT = 600;
 const SCALE_BY = 1.01;
+const INITIAL_SCROLL_MAKER_SIZE = {
+  // TODO: find adequate padding
+  width: STAGE_WIDTH + 100,
+  height: STAGE_HEIGHT + 100,
+};
 
 export default function Viewer(): React.JSX.Element {
   const stageRef = useRef<Konva.Stage>(null);
@@ -68,6 +73,10 @@ export default function Viewer(): React.JSX.Element {
     setStagePos(_pos);
   }
 
+  const [scrollMakerSize, setScrollMakerSize] = useState(
+    INITIAL_SCROLL_MAKER_SIZE
+  );
+
   if (!image) return <div>Loading...</div>;
 
   return (
@@ -77,6 +86,7 @@ export default function Viewer(): React.JSX.Element {
         onClick={() => {
           setScale(initialScale ?? 1);
           setStagePos(initialStagePos ?? { x: 0, y: 0 });
+          setScrollMakerSize(INITIAL_SCROLL_MAKER_SIZE);
         }}
       >
         Reset
@@ -99,9 +109,8 @@ export default function Viewer(): React.JSX.Element {
         <div
           className={classes["scroll-maker"]}
           style={{
-            // TODO: resize according to scale
-            width: STAGE_WIDTH + 100,
-            height: STAGE_HEIGHT + 100,
+            width: scrollMakerSize.width,
+            height: scrollMakerSize.height,
           }}
         >
           <Stage
@@ -123,9 +132,13 @@ export default function Viewer(): React.JSX.Element {
                 y: (pointer.y - stageRef.current.y()) / scale,
               };
               const direction = e.evt.deltaY > 0 ? -1 : 1;
-              const newScale =
-                direction > 0 ? scale * SCALE_BY : scale / SCALE_BY;
+              const scaleFactor = direction > 0 ? SCALE_BY : 1 / SCALE_BY;
+              const newScale = scale * scaleFactor;
               setScale(newScale);
+              setScrollMakerSize({
+                width: scrollMakerSize.width * scaleFactor,
+                height: scrollMakerSize.height * scaleFactor,
+              });
 
               const newPos = {
                 x: pointer.x - mousePointTo.x * newScale,
