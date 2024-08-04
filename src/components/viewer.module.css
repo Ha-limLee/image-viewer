@@ -1,3 +1,13 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reset-button {
+  width: fit-content;
+}
+
 .stage-container {
   width: 800px;
   height: 600px;
