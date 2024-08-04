@@ -68,7 +68,7 @@ export default function Viewer(): React.JSX.Element {
   if (!image) return <div>Loading...</div>;
 
   return (
-    <div className={classes.root}>
+    <div className={classes["stage-container"]}>
       <Stage
         ref={stageRef}
         width={STAGE_WIDTH}
