@@ -78,7 +78,20 @@ export default function Viewer(): React.JSX.Element {
       >
         Reset
       </button>
-      <div className={classes["stage-container"]}>
+      <div
+        className={classes["stage-container"]}
+        onScroll={(e) => {
+          const dx = e.currentTarget.scrollLeft;
+          const dy = e.currentTarget.scrollTop;
+          const container = stageRef.current?.container();
+
+          if (container) {
+            container.style.transform = "translate(" + dx + "px, " + dy + "px)";
+            stageRef.current?.offsetX(dx);
+            stageRef.current?.offsetY(dy);
+          }
+        }}
+      >
         <div
           className={classes["scroll-maker"]}
           style={{
