@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 import Konva from "konva";
 import { Image, Layer, Stage } from "react-konva";
 import useImage from "use-image";
-import { isDeepEqual } from "remeda";
 
 import classes from "./viewer.module.css";
 
@@ -42,25 +41,29 @@ export default function Viewer(): React.JSX.Element {
   const [image] = useImage(imageUrl);
 
   const [scale, setScale] = useState(1);
-  const [initialScale, setInitialScale] = useState(1);
+  const [initialScale, setInitialScale] = useState<number | null>(null);
   const _scale =
     image &&
     fitImageToStage({ height: STAGE_HEIGHT, width: STAGE_WIDTH }, image);
-  if (_scale != null && _scale !== initialScale) {
+  if (_scale != null && initialScale === null) {
     setInitialScale(_scale);
     setScale(_scale);
   }
 
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
-  const [initialStagePos, setInitialStagePos] = useState({ x: 0, y: 0 });
+  const [initialStagePos, setInitialStagePos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const _pos =
     image &&
+    initialScale != null &&
     centerImage({
       stage: { width: STAGE_WIDTH, height: STAGE_HEIGHT },
       image,
       scale: initialScale,
     });
-  if (_pos && !isDeepEqual(_pos, initialStagePos)) {
+  if (_pos && initialStagePos === null) {
     setInitialStagePos(_pos);
     setStagePos(_pos);
   }
@@ -72,8 +75,8 @@ export default function Viewer(): React.JSX.Element {
       <button
         className={classes["reset-button"]}
         onClick={() => {
-          setScale(initialScale);
-          setStagePos(initialStagePos);
+          setScale(initialScale ?? 1);
+          setStagePos(initialStagePos ?? { x: 0, y: 0 });
         }}
       >
         Reset
