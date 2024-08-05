@@ -41,7 +41,15 @@ const INITIAL_SCROLL_MAKER_SIZE = {
 };
 
 export default function Viewer(): React.JSX.Element {
+  const timerRef = useRef<number>();
+  const stageContainerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
+  /**
+   * zoom: hide scrollbar.
+   * none: show scrollbar and set scrollbar position.
+   */
+  const [phase, setPhase] = useState<"zoom" | "none">("none");
+  const hideScrollbar = phase === "zoom" ? true : false;
 
   const [image] = useImage(imageUrl);
 
@@ -92,8 +100,13 @@ export default function Viewer(): React.JSX.Element {
         Reset
       </button>
       <div
+        ref={stageContainerRef}
         className={classes["stage-container"]}
-        style={{ width: STAGE_WIDTH, height: STAGE_HEIGHT }}
+        style={{
+          width: STAGE_WIDTH,
+          height: STAGE_HEIGHT,
+          overflow: hideScrollbar ? "clip" : "auto",
+        }}
         onScroll={(e) => {
           const dx = e.currentTarget.scrollLeft;
           const dy = e.currentTarget.scrollTop;
@@ -124,6 +137,8 @@ export default function Viewer(): React.JSX.Element {
               e.evt.preventDefault();
               if (!e.evt.ctrlKey || !stageRef.current) return;
 
+              setPhase("zoom");
+
               const pointer = stageRef.current.getPointerPosition();
               if (!pointer) return;
 
@@ -145,6 +160,11 @@ export default function Viewer(): React.JSX.Element {
                 y: pointer.y - mousePointTo.y * newScale,
               };
               setStagePos(newPos);
+
+              clearTimeout(timerRef.current);
+              timerRef.current = setTimeout(() => {
+                setPhase("none");
+              }, 500);
             }}
           >
             <Layer>

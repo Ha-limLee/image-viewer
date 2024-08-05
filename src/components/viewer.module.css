@@ -11,7 +11,6 @@
 .stage-container {
   background-color: gray;
   outline: 1px solid black;
-  overflow: auto;
 }
 
 .scroll-maker {
