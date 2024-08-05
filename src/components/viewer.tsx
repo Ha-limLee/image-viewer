@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import type { MutableRefObject } from "react";
 
 import Konva from "konva";
 import { Image, Layer, Stage } from "react-konva";
@@ -37,8 +38,18 @@ const SCALE_BY = 1.01;
 
 export default function Viewer(): React.JSX.Element {
   const timerRef = useRef<number>();
-  const stageContainerRef = useRef<HTMLDivElement>(null);
+  const stageContainerRef: MutableRefObject<HTMLDivElement | null> =
+    useRef(null);
   const stageRef = useRef<Konva.Stage>(null);
+
+  const horizontalScrollBarRef = useRef<HTMLDivElement>(null);
+  const [horizontalScrollBarPosition, setHorizontalScrollBarPosition] =
+    useState({ left: 0, top: 0 });
+  const [
+    initialHorizontalScrollBarPosition,
+    setInitialHorizontalScrollBarPosition,
+  ] = useState<{ left: number; top: number } | null>(null);
+
   /**
    * zoom: hide scrollbar.
    * none: show scrollbar and set scrollbar position.
@@ -79,78 +90,108 @@ export default function Viewer(): React.JSX.Element {
   if (!image) return <div>Loading...</div>;
 
   return (
-    <div className={classes.root}>
-      <button
-        className={classes["reset-button"]}
-        onClick={() => {
-          setScale(initialScale ?? 1);
-          setStagePos(initialStagePos ?? { x: 0, y: 0 });
-        }}
-      >
-        Reset
-      </button>
-      <div
-        ref={stageContainerRef}
-        className={classes["stage-container"]}
-        style={{
-          width: STAGE_WIDTH,
-          height: STAGE_HEIGHT,
-          overflow: hideScrollbar ? "clip" : "auto",
-        }}
-        onScroll={(e) => {
-          const dx = e.currentTarget.scrollLeft;
-          const dy = e.currentTarget.scrollTop;
-          const container = stageRef.current?.container();
-
-          if (container) {
-            container.style.transform = "translate(" + dx + "px, " + dy + "px)";
-            stageRef.current?.offsetX(dx);
-            stageRef.current?.offsetY(dy);
-          }
-        }}
-      >
-        <Stage
-          ref={stageRef}
-          width={STAGE_WIDTH}
-          height={STAGE_HEIGHT}
-          scale={{ x: scale, y: scale }}
-          x={stagePos.x}
-          y={stagePos.y}
-          onWheel={(e) => {
-            e.evt.preventDefault();
-            if (!e.evt.ctrlKey || !stageRef.current) return;
-
-            setPhase("zoom");
-
-            const pointer = stageRef.current.getPointerPosition();
-            if (!pointer) return;
-
-            const mousePointTo = {
-              x: (pointer.x - stageRef.current.x()) / scale,
-              y: (pointer.y - stageRef.current.y()) / scale,
-            };
-            const direction = e.evt.deltaY > 0 ? -1 : 1;
-            const scaleFactor = direction > 0 ? SCALE_BY : 1 / SCALE_BY;
-            const newScale = scale * scaleFactor;
-            setScale(newScale);
-
-            const newPos = {
-              x: pointer.x - mousePointTo.x * newScale,
-              y: pointer.y - mousePointTo.y * newScale,
-            };
-            setStagePos(newPos);
-
-            clearTimeout(timerRef.current);
-            timerRef.current = setTimeout(() => {
-              setPhase("none");
-            }, 500);
+    <>
+      <div className={classes.root}>
+        <button
+          className={classes["reset-button"]}
+          onClick={() => {
+            setScale(initialScale ?? 1);
+            setStagePos(initialStagePos ?? { x: 0, y: 0 });
           }}
         >
-          <Layer>
-            <Image image={image} />
-          </Layer>
-        </Stage>
+          Reset
+        </button>
+        <div
+          ref={(element) => {
+            stageContainerRef.current = element;
+
+            if (element && initialHorizontalScrollBarPosition === null) {
+              const horizontalScrollBarLeft: number = element.offsetLeft;
+              const rect = element.getBoundingClientRect();
+              const horizontalScrollBarTop: number = rect.bottom - 10;
+
+              const pos = {
+                left: horizontalScrollBarLeft,
+                top: horizontalScrollBarTop,
+              };
+
+              setHorizontalScrollBarPosition(pos);
+              setInitialHorizontalScrollBarPosition(pos);
+            }
+          }}
+          className={classes["stage-container"]}
+          style={{
+            width: STAGE_WIDTH,
+            height: STAGE_HEIGHT,
+            overflow: hideScrollbar ? "clip" : "auto",
+          }}
+          onScroll={(e) => {
+            const dx = e.currentTarget.scrollLeft;
+            const dy = e.currentTarget.scrollTop;
+            const container = stageRef.current?.container();
+
+            if (container) {
+              container.style.transform =
+                "translate(" + dx + "px, " + dy + "px)";
+              stageRef.current?.offsetX(dx);
+              stageRef.current?.offsetY(dy);
+            }
+          }}
+        >
+          <Stage
+            ref={stageRef}
+            width={STAGE_WIDTH}
+            height={STAGE_HEIGHT}
+            scale={{ x: scale, y: scale }}
+            x={stagePos.x}
+            y={stagePos.y}
+            onWheel={(e) => {
+              e.evt.preventDefault();
+              if (!e.evt.ctrlKey || !stageRef.current) return;
+
+              setPhase("zoom");
+
+              const pointer = stageRef.current.getPointerPosition();
+              if (!pointer) return;
+
+              const mousePointTo = {
+                x: (pointer.x - stageRef.current.x()) / scale,
+                y: (pointer.y - stageRef.current.y()) / scale,
+              };
+              const direction = e.evt.deltaY > 0 ? -1 : 1;
+              const scaleFactor = direction > 0 ? SCALE_BY : 1 / SCALE_BY;
+              const newScale = scale * scaleFactor;
+              setScale(newScale);
+
+              const newPos = {
+                x: pointer.x - mousePointTo.x * newScale,
+                y: pointer.y - mousePointTo.y * newScale,
+              };
+              setStagePos(newPos);
+
+              clearTimeout(timerRef.current);
+              timerRef.current = setTimeout(() => {
+                setPhase("none");
+              }, 500);
+            }}
+          >
+            <Layer>
+              <Image image={image} />
+            </Layer>
+          </Stage>
+        </div>
       </div>
-    </div>
+      <div
+        ref={horizontalScrollBarRef}
+        style={{
+          position: "absolute",
+          backgroundColor: "red",
+          width: 100,
+          height: 10,
+          left: horizontalScrollBarPosition.left,
+          top: horizontalScrollBarPosition.top,
+        }}
+      ></div>
+    </>
   );
 }
