@@ -34,11 +34,6 @@ function centerImage({
 const STAGE_WIDTH = 800;
 const STAGE_HEIGHT = 600;
 const SCALE_BY = 1.01;
-const INITIAL_SCROLL_MAKER_SIZE = {
-  // TODO: find adequate padding
-  width: STAGE_WIDTH + 100,
-  height: STAGE_HEIGHT + 100,
-};
 
 export default function Viewer(): React.JSX.Element {
   const timerRef = useRef<number>();
@@ -81,10 +76,6 @@ export default function Viewer(): React.JSX.Element {
     setStagePos(_pos);
   }
 
-  const [scrollMakerSize, setScrollMakerSize] = useState(
-    INITIAL_SCROLL_MAKER_SIZE
-  );
-
   if (!image) return <div>Loading...</div>;
 
   return (
@@ -94,7 +85,6 @@ export default function Viewer(): React.JSX.Element {
         onClick={() => {
           setScale(initialScale ?? 1);
           setStagePos(initialStagePos ?? { x: 0, y: 0 });
-          setScrollMakerSize(INITIAL_SCROLL_MAKER_SIZE);
         }}
       >
         Reset
@@ -119,59 +109,47 @@ export default function Viewer(): React.JSX.Element {
           }
         }}
       >
-        <div
-          className={classes["scroll-maker"]}
-          style={{
-            width: scrollMakerSize.width,
-            height: scrollMakerSize.height,
+        <Stage
+          ref={stageRef}
+          width={STAGE_WIDTH}
+          height={STAGE_HEIGHT}
+          scale={{ x: scale, y: scale }}
+          x={stagePos.x}
+          y={stagePos.y}
+          onWheel={(e) => {
+            e.evt.preventDefault();
+            if (!e.evt.ctrlKey || !stageRef.current) return;
+
+            setPhase("zoom");
+
+            const pointer = stageRef.current.getPointerPosition();
+            if (!pointer) return;
+
+            const mousePointTo = {
+              x: (pointer.x - stageRef.current.x()) / scale,
+              y: (pointer.y - stageRef.current.y()) / scale,
+            };
+            const direction = e.evt.deltaY > 0 ? -1 : 1;
+            const scaleFactor = direction > 0 ? SCALE_BY : 1 / SCALE_BY;
+            const newScale = scale * scaleFactor;
+            setScale(newScale);
+
+            const newPos = {
+              x: pointer.x - mousePointTo.x * newScale,
+              y: pointer.y - mousePointTo.y * newScale,
+            };
+            setStagePos(newPos);
+
+            clearTimeout(timerRef.current);
+            timerRef.current = setTimeout(() => {
+              setPhase("none");
+            }, 500);
           }}
         >
-          <Stage
-            ref={stageRef}
-            width={STAGE_WIDTH}
-            height={STAGE_HEIGHT}
-            scale={{ x: scale, y: scale }}
-            x={stagePos.x}
-            y={stagePos.y}
-            onWheel={(e) => {
-              e.evt.preventDefault();
-              if (!e.evt.ctrlKey || !stageRef.current) return;
-
-              setPhase("zoom");
-
-              const pointer = stageRef.current.getPointerPosition();
-              if (!pointer) return;
-
-              const mousePointTo = {
-                x: (pointer.x - stageRef.current.x()) / scale,
-                y: (pointer.y - stageRef.current.y()) / scale,
-              };
-              const direction = e.evt.deltaY > 0 ? -1 : 1;
-              const scaleFactor = direction > 0 ? SCALE_BY : 1 / SCALE_BY;
-              const newScale = scale * scaleFactor;
-              setScale(newScale);
-              setScrollMakerSize({
-                width: scrollMakerSize.width * scaleFactor,
-                height: scrollMakerSize.height * scaleFactor,
-              });
-
-              const newPos = {
-                x: pointer.x - mousePointTo.x * newScale,
-                y: pointer.y - mousePointTo.y * newScale,
-              };
-              setStagePos(newPos);
-
-              clearTimeout(timerRef.current);
-              timerRef.current = setTimeout(() => {
-                setPhase("none");
-              }, 500);
-            }}
-          >
-            <Layer>
-              <Image image={image} />
-            </Layer>
-          </Stage>
-        </div>
+          <Layer>
+            <Image image={image} />
+          </Layer>
+        </Stage>
       </div>
     </div>
   );
